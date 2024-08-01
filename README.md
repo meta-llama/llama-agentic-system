@@ -18,7 +18,7 @@ One of the safety protections is provided by Llama Guard. By default, Llama Guar
 > The API is still evolving and may change. Feel free to build and experiment, but please don't rely on its stability just yet!
 
 
-**LLama Agentic System Installation and Setup Guide**
+**Llama Agentic System Installation and Setup Guide**
 =============================================
 
 **Create a Conda Environment**
@@ -102,7 +102,7 @@ This should print the CLI help message.
 ```bash
 usage: llama [-h] {download,inference,model,agentic_system} ...
 
-Welcome to the LLama cli
+Welcome to the Llama cli
 
 options:
   -h, --help            show this help message and exit
@@ -117,7 +117,7 @@ This Llama CLI will help you to do the following
 - Configure and start a inference server on your local machine
 - Configure and run apps that showcase agentic systems built using the Llama Stack APIs.
 
-Lets go step by step and finish the setup process,
+Let's go step by step and finish the setup process,
 
 **Download Checkpoints (or use existing models)**
 ----------------------------------------------
@@ -302,7 +302,7 @@ You should see outputs to stdout of the form --
 Environment: ipython
 Tools: brave_search, wolfram_alpha, photogen
 
-Cutting Knowledge Date: December 2023
+Knowledge Cutoff Date: December 2023
 Today Date: 23 July 2024
 
 
