@@ -8,18 +8,16 @@
 # This software may be used and distributed in accordance with the terms of the Llama 3 Community License Agreement.
 
 import asyncio
-
+from typing import List, Optional, Dict
 import fire
-from common.client_utils import *  # noqa: F403
 
 from llama_stack_client import LlamaStackClient
 from llama_stack_client.lib.agents.event_logger import EventLogger
+from llama_stack_client.types import *  # noqa: F403
 
 from llama_stack_client.types import SamplingParams, UserMessage
 from llama_stack_client.types.agent_create_params import AgentConfig
 from termcolor import cprint
-
-from .multi_turn import execute_turns, prompt_to_turn
 
 
 class Agent:
@@ -39,13 +37,14 @@ class Agent:
         )
         self.session_id = agentic_system_create_session_response.session_id
 
-    async def execute_turn(self, content: str):
+    async def execute_turn(self, content: str, attachments: Optional[List[Attachment]] = None,):
         response = self.client.agents.turns.create(
             agent_id=self.agent_id,
             session_id=self.session_id,
             messages=[
                 UserMessage(content=content, role="user"),
             ],
+            attachments=attachments,
             stream=True,
         )
 
@@ -55,42 +54,81 @@ class Agent:
 
 
 async def run_main(host: str, port: int, disable_safety: bool = False):
+    # tool_definitions = [
+    #     AgentConfigToolSearchToolDefinition(
+    #         type="brave_search", engine="brave", api_key="YOUR_API_KEY"
+    #     )
+    # ]
+
+    # agent_config = AgentConfig(
+    #     model="Llama3.1-8B-Instruct",
+    #     instructions="You are a helpful assistant",
+    #     sampling_params=SamplingParams(strategy="greedy", temperature=1.0, top_p=0.9),
+    #     tools=tool_definitions,
+    #     tool_choice="auto",
+    #     tool_prompt_format="function_tag",
+    #     input_shields=[],
+    #     output_shields=[],
+    #     enable_session_persistence=False,
+    # )
+
+    # agent = Agent(host=host, port=port)
+    # agent.create_agent(agent_config)
+
+    # user_prompts = [
+    #     "I am planning a trip to Switzerland, what are the top 3 places to visit?",
+    #     "What is so special about #1?",
+    #     "What other countries should I consider to club?",
+    #     "What is the capital of France?",
+    # ]
+
+    # iterator = agent.execute_turn(content="What is the capital of France?")
+
+    # for prompt in user_prompts:
+    #     cprint(f"User> {prompt}", color="white", attrs=["bold"])
+    #     response = agent.execute_turn(content=prompt)
+
+    #     async for log in EventLogger().log(response):
+    #         if log is not None:
+    #             log.print()
+
+    # inflation
     tool_definitions = [
-        AgentConfigToolSearchToolDefinition(
-            type="brave_search", engine="brave", api_key="YOUR_API_KEY"
-        )
+        {
+            "type": "brave_search",
+            "engine": "brave",
+            "api_key": "YOUR_API_KEY",
+        },
+        {
+            "type": "code_interpreter",
+        }
     ]
 
-    agent_config = AgentConfig(
+    agent_config2 = AgentConfig(
         model="Llama3.1-8B-Instruct",
         instructions="You are a helpful assistant",
         sampling_params=SamplingParams(strategy="greedy", temperature=1.0, top_p=0.9),
         tools=tool_definitions,
-        tool_choices="auto",
+        tool_choice="required",
         tool_prompt_format="function_tag",
         input_shields=[],
         output_shields=[],
         enable_session_persistence=False,
     )
 
-    agent = Agent(host=host, port=port)
-    agent.create_agent(agent_config)
+    agent2 = Agent(host=host, port=port)
+    agent2.create_agent(agent_config2)
 
-    user_prompts = [
-        "I am planning a trip to Switzerland, what are the top 3 places to visit?",
-        "What is so special about #1?",
-        "What other countries should I consider to club?",
-        "What is the capital of France?",
+    attachments = [
+        Attachment(
+            content="https://raw.githubusercontent.com/meta-llama/llama-stack-apps/main/examples/resources/inflation.csv",
+            mime_type="text/csv",
+        )
     ]
-
-    iterator = agent.execute_turn(content="What is the capital of France?")
-
-    for prompt in user_prompts:
-        cprint(f"User> {prompt}", color="white", attrs=["bold"])
-        response = agent.execute_turn(content=prompt)
-        async for log in EventLogger().log(response):
-            if log is not None:
-                log.print()
+    response = agent2.execute_turn(content="Here is a csv, can you describe it?", attachments=attachments)
+    async for log in EventLogger().log(response):
+        if log is not None:
+            log.print()
 
 
 def main(host: str, port: int, disable_safety: bool = False):
