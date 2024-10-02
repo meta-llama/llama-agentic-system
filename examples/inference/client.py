@@ -26,7 +26,7 @@ async def run_main(host: str, port: int, stream: bool = True):
     iterator = client.inference.chat_completion(
         messages=[
             UserMessage(
-                content="hello world, write me a 2 sentence poem about the moon",
+                content="Answer the following multiple choice question. The last line of your response should be of the following format: 'Answer: $LETTER' (without quotes) where LETTER is one of ABCD. Think step by step before answering.\n\nFind the degree for the given field extension Q(sqrt(2), sqrt(3), sqrt(18)) over Q.\n\nA) 0\nB) 4\nC) 2\nD) 6",
                 role="user",
             ),
         ],
