@@ -141,6 +141,11 @@ def inference(client, preprocessed):
         model="Llama3.1-8B-Instruct",
         stream=False,
     )
+    return response
+
+
+def postprocess(response):
+    # this will map to eval/postprocess
     if response.startswith("data:"):
         response = response[len("data: ") :]
         json_response = json.loads(response)
@@ -150,6 +155,7 @@ def inference(client, preprocessed):
 
 def score_fn(response_text, row):
     # F2: transform generation outputs
+    extracted_answer = None
     for answer_regex in MULTILINGUAL_ANSWER_REGEXES:
         regex = MULTILINGUAL_ANSWER_PATTERN_TEMPLATE.format(answer_regex)
         match = re.search(regex, response_text)
@@ -157,7 +163,7 @@ def score_fn(response_text, row):
             extracted_answer = normalize_extracted_answer(match.group(1))
             break
 
-    score = 1.0 if extracted_answer == row["Answer"] else 0.0
+    score = 1.0 if extracted_answer and extracted_answer == row["Answer"] else 0.0
     return score
 
 
@@ -166,7 +172,7 @@ def main(host: str, port: int, disable_safety: bool = False):
         base_url=f"https://llama-stack.together.ai",
     )
 
-    # Get dataset
+    # Get dataset --> mapping to dataset/register
     dataset = get_dataset()[:3]
     print(len(dataset))
     print(dataset[0])
@@ -178,7 +184,10 @@ def main(host: str, port: int, disable_safety: bool = False):
 
     # Inference loop to get generation outputs --> Batch inference
     generation_outputs = [inference(client, row) for row in preprocessed]
-    print(generation_outputs[0])
+
+    # F2: post process
+    postprocessed = [postprocess(row) for row in generation_outputs]
+    print(postprocessed[0])
 
     # F3: evaluate generation outputs (based on dataset & scoring function)
     scores = [
