@@ -9,7 +9,7 @@ import fire
 from llama_stack_client import LlamaStackClient, Agent, AgentEventLogger
 from termcolor import colored
 
-from .utils import check_model_is_available, get_any_available_model
+from .utils import check_model_is_available, get_any_available_chat_model
 
 
 def main(host: str, port: int, model_id: str | None = None):
@@ -27,14 +27,8 @@ def main(host: str, port: int, model_id: str | None = None):
         provider_data={"tavily_search_api_key": os.getenv("TAVILY_SEARCH_API_KEY")},
     )
 
-    available_shields = [shield.identifier for shield in client.shields.list()]
-    if not available_shields:
-        print(colored("No available shields. Disabling safety.", "yellow"))
-    else:
-        print(f"Available shields found: {available_shields}")
-
     if model_id is None:
-        model_id = get_any_available_model(client)
+        model_id = get_any_available_chat_model(client)
         if model_id is None:
             return
     else:
@@ -47,10 +41,8 @@ def main(host: str, port: int, model_id: str | None = None):
         client,
         model=model_id,
         instructions="",
-        tools=["builtin::websearch"],
-        input_shields=available_shields,
-        output_shields=available_shields,
-        enable_session_persistence=False,
+        # OpenAI Responses tool schema requires a type discriminator.
+        tools=[{"type": "web_search"}],
     )
     user_prompts = [
         "Hello",
@@ -65,8 +57,8 @@ def main(host: str, port: int, model_id: str | None = None):
             session_id=session_id,
         )
 
-        for log in AgentEventLogger().log(response):
-            log.print()
+        for printable in AgentEventLogger().log(response):
+            print(printable, end="", flush=True)
 
 
 if __name__ == "__main__":
